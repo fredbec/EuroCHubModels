@@ -21,8 +21,6 @@ anomalies <- fread(here("data", "anomalies.csv")) |>
 # Load population data
 population <- fread(here("data", "population.csv"))
 
-# Load forecast metedata. See data-raw/get-hub-metadata.R for munging
-metadata <- fread(here("data", "metadata.csv"))
 
 combdat <- fcdat |>
   filter(location %in% c("PL", "DE")) |>
@@ -36,8 +34,16 @@ combdat <- fcdat |>
   filter(!model == "EuroCOVIDhub-ensemble") |>
   filter(forecast_date >= as.Date("2021-03-11")) |> #before: 2021-03-20
   filter(forecast_date <= as.Date("2023-03-11")) |>
-  merge_forecasts_with_truth(truth) |>
-  DT(!anomalies, on = c("location", "target_end_date", "target_type"))
+  merge_forecasts_with_truth(truth) #|>
+  DT(, location_name := NULL) |>
+  DT(, scenario_id := NULL) |>
+  DT(anomalies, on = c("location", "target_end_date", "target_type"), anomaly_code := i.anomaly) |>
+  DT(, anomaly := !is.na(anomaly_code)) |>
+  setcolorder(c("model", "location", "target_type",
+                "forecast_date", "horizon", "target_end_date",
+                "quantile", "prediction", "true_value",
+                "anomaly", "anomaly_code")) |>
+DT(order(location, target_type, forecast_date, horizon, model, quantile))
 
 combdat |>
   select(location, target_type, target_end_date, horizon, forecast_date) |> distinct() |>

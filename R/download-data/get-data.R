@@ -8,7 +8,7 @@ repo <- "covid19-forecast-hub-europe/covid19-forecast-hub-europe"
 forecasts_unprocessed <- get_hub_forecasts(repo)
 data.table::fwrite(forecasts_unprocessed, here("data", "forecasts_unprocessed.csv"))
 
-
+forecasts_unprocessed <- fread(here("data", "forecasts_unprocessed.csv"))
 #reorganize columns
 forecasts <- data.table::copy(forecasts_unprocessed) |>
   DT(, c("horizon", "target_type") := tstrsplit(target, " wk ahead inc ", fixed=TRUE)) |>
@@ -26,6 +26,7 @@ forecasts <- forecasts |>
   DT(!type == "point") |> #remove point forecasts
   DT(!model == "data-processed") |> #remove evaluation data
   DT(, type := NULL) |>
+  DT(, n_models := NULL) |>
   #only keep models that submit full forecasts
   DT(,  n := .N, by = c("model", "forecast_date", "target_type", "location")) |>
   DT(n == 92) |>
