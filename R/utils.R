@@ -5,7 +5,7 @@ merge_forecasts_with_truth <- function(forecasts, truth) {
   data.table::setnames(truth, "date", "target_end_date")
 
   forecasts_with_truth <- truth[
-    forecasts, on = c("location", "target_end_date")
+    forecasts, on = c("location", "target_end_date", "target_type")
   ]
 
   # Remove point forecasts

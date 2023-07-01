@@ -2,20 +2,31 @@
 library(data.table)
 library(here)
 
+DT <- `[`
+
 # Download JHU data from the hub - as available on the 1st of September 2022
-jhu <- fread(
-  "https://raw.githubusercontent.com/covid19-forecast-hub-europe/covid19-forecast-hub-europe/f6922c3e4bdcb055abcbba8e73472afacac4cf40/data-truth/JHU/truth_JHU-Incident%20Cases.csv" # nolint
-)
+jhu_cases <- fread(
+  "https://raw.githubusercontent.com/covid19-forecast-hub-europe/covid19-forecast-hub-europe/0b7c857/data-truth/JHU/truth_JHU-Incident%20Cases.csv" # nolint
+) |>
+  DT(, target_type := "Cases")
+
+# Download JHU data from the hub - as available on the 1st of September 2022
+jhu_deaths <- fread(
+  "https://raw.githubusercontent.com/covid19-forecast-hub-europe/covid19-forecast-hub-europe/0b7c857/data-truth/JHU/truth_JHU-Incident%20Deaths.csv" # nolint
+) |>
+  DT(, target_type := "Deaths")
+
+jhu <- rbind(jhu_cases, jhu_deaths)
 
 # Format date
 jhu[, date := as.Date(date)]
 
 # Order data by date and location
-setkey(jhu, location_name, date)
+setkey(jhu, location_name, target_type, date)
 
 # Summarise to weekly cases starting on Saturday to Sync with the forecast hubs
 truth <- copy(jhu)[,
-                   true_value := frollsum(value, n = 7), by = c("location_name")
+                   true_value := frollsum(value, n = 7), by = c("location_name", "target_type")
 ]
 
 # Filter from the 15th of January 2022 to keep only observations with forecasts
