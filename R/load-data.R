@@ -21,6 +21,7 @@ anomalies <- fread(here("data", "anomalies.csv")) |>
 # Load population data
 population <- fread(here("data", "population.csv"))
 
+period_cats <- fread(here("data", "period_cats.csv"))
 
 combdat <- fcdat |>
   filter(location %in% c("PL", "DE")) |>
@@ -39,12 +40,17 @@ combdat <- fcdat |>
   DT(, scenario_id := NULL) |>
   DT(anomalies, on = c("location", "target_end_date", "target_type"), anomaly_code := i.anomaly) |>
   DT(, anomaly := !is.na(anomaly_code)) |>
+  rescale_to_incidence_rate(population) |>
+  DT(order(location, target_type, forecast_date, horizon, model, quantile)) |>
   setcolorder(c("model", "location", "target_type",
                 "forecast_date", "horizon", "target_end_date",
                 "quantile", "prediction", "true_value",
+                "prediction_pop", "true_value_pop",
                 "anomaly", "anomaly_code")) |>
-DT(order(location, target_type, forecast_date, horizon, model, quantile))
+  DT(period_cats, on = c("forecast_date"))
 
-combdat |>
-  select(location, target_type, target_end_date, horizon, forecast_date) |> distinct() |>
-  arrange(location, target_type, forecast_date)
+
+data.table::fwrite(combdat, here("data", "depldat.csv"))
+
+
+
