@@ -18,14 +18,16 @@ merge_forecasts_with_truth <- function(forecasts, truth) {
 }
 
 rescale_to_incidence_rate <- function(forecasts, population, scale = 1e5) {
+  DT <- `[`
+
   forecasts <- data.table::copy(forecasts)
   population <- data.table::copy(population)
 
   forecasts_with_population <- forecasts[
-    population, on = c("location")
+    population, on = c("location"), population := i.population
   ] |>
-    data.table::DT(, true_value := true_value / population * scale) |>
-    data.table::DT(, prediction := prediction / population * scale)
+    DT(, true_value_pop := true_value / population * scale) |>
+    DT(, prediction_pop := prediction / population * scale)
 
   return(forecasts_with_population[])
 }
