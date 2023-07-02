@@ -156,3 +156,13 @@ recombn_ensemble <- function(fcdat,
   return(recombn_mods)
 
 }
+
+
+theme_masterthesis <- function() {
+  theme_minimal() %+replace%
+    theme(axis.line = element_line(colour = "grey80"),
+          axis.ticks = element_line(colour = "grey80"),
+          panel.border = element_blank(),
+          panel.background = element_blank(),
+          legend.position = "bottom")
+}
