@@ -71,7 +71,9 @@ enssize <- fread(here("data", "depldat.csv")) |>
   summarise(mean_avail = mean(nmods))
 ```
 
-## 
+This document shows some preliminary scoring results for ensembles of size $k\in\{4,5,6,7\}$ that were recombined from all models available in the European Forecast Hub between `r fcdat$forecast_date |> min()` and `r fcdat$forecast_date |> max()` for \textbf{Cases} forecasts in \textbf{Germany}. 
+
+## Score Table recombined ensembles
 
 ```{r, echo = FALSE}
 rcscores |> 
@@ -112,9 +114,18 @@ rcscores |>
 plotdat <- rcpreds |>
   filter(quantile == 0.5, horizon == 2)
 
+plotdat2 <- fread(here("data", "forecasts.csv")) |>
+  filter(model == "EuroCOVIDhub-ensemble") |>
+  filter(location == "DE", target_type == "Cases", 
+         quantile == 0.5, horizon == 2) |>
+  mutate(idens = 1) |>
+  filter(forecast_date <= max(plotdat$forecast_date),
+         forecast_date >= min(plotdat$forecast_date))
+
 ggplot(aes(x = target_end_date, y = prediction, group = idens), data = plotdat) +
   geom_line(alpha = 0.1, color = "firebrick4") +
   ggplot2::geom_point(aes(x = target_end_date, y = true_value), data = plotdat, shape = 18) +
+  geom_line(aes(x = target_end_date, y = value), data = plotdat2, color = "steelblue4", lwd = 1.005) +
   geom_line(aes(x = target_end_date, y = true_value), data = plotdat) +
   facet_wrap(~k, nrow = 4) +
   lapply(seq_along(date_list), function(dt) {
@@ -151,6 +162,7 @@ hospital_labeller <- function(variable,value){
 
 ggplot(aes(x = k, y = rel_ivscores, fill = k), data = rcscores) +
   geom_boxplot() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
   facet_wrap(~period_cat, scales = "free",
              labeller = hospital_labeller) +
   theme_masterthesis() +
