@@ -124,3 +124,35 @@ score_ensemble <- function(fcdat, incl, gran = "period_cat"){
   ivscore <- scoreens |> select(interval_score) |> pull()
   return(ivscore)
 }
+
+
+#gives a data.table with k+1 columns (k models and the period)
+recombn_ensemble <- function(fcdat,
+                             k,
+                             p_length,
+                             avail_thresh,
+                             nfcsts,
+                             random.seed){
+
+  set.seed(random.seed)
+
+  recombn_mods <- fcdat |>
+    #filter(period_cat == pc) |>
+    select(model, forecast_date, period_cat, location, target_type) |>
+    distinct()|>
+    DT(,  n := .N, by = c("model", "period_cat", "location", "target_type")) |>
+    filter(n >= model_avail * plength) |>
+    select(model, period_cat, location, target_type) |>
+    distinct() |>
+    split(by = c("period_cat", "location", "target_type")) |>
+    lapply(function(mods) mods$model) |>
+    lapply(function(mods) combn(mods, k) |> t()) |>
+    lapply(function(mods) mods[sample(nrow(mods), nfcsts), ]) |>
+    lapply(function(mods) as.data.table(mods)) |>
+    rbindlist(idcol = "idcol") |>
+    DT(, c("period_cat", "location", "target_type") := tstrsplit(idcol, ".", fixed = TRUE)) |>
+    DT(, idcol := NULL)
+
+  return(recombn_mods)
+
+}
