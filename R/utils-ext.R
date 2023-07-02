@@ -8,7 +8,8 @@ make_ensemble <- function(data,
                           strat = c("location", "forecast_date", "quantile",
                                     "horizon", "target_type"),
                           extra_vars = c("target_end_date",
-                                         "population"),
+                                         "population",
+                                         "period_cat"),
                           avail_threshold = NULL){
 
   #extract function name to make model name
@@ -112,3 +113,14 @@ make_ensemble <- function(data,
   return(ensemble)
 }
 
+score_ensemble <- function(fcdat, incl, gran = "period_cat"){
+
+  ensdat <- make_ensemble(fcdat, incl = incl)
+
+  scoreens <- ensdat |>
+    scoringutils::score() |>
+    scoringutils::summarise_scores(by = c("location", "target_type", gran))
+
+  ivscore <- scoreens |> select(interval_score) |> pull()
+  return(ivscore)
+}
